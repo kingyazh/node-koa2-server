@@ -1,0 +1,44 @@
+{
+  "name": "web",
+  "version": "1.0.0",
+  "description": "web server host multiple domains and multiple files ",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "web",
+    "server",
+    "host",
+    "multiple",
+    "domains",
+    "multiple",
+    "files"
+  ],
+  "author": "KingYa",
+  "license": "ISC",
+  "dependencies": {
+    "chai": "^4.1.2",
+    "ejs": "^2.6.1",
+    "http-proxy": "^1.17.0",
+    "koa": "^2.5.2",
+    "koa-bodyparser": "^4.2.1",
+    "koa-json": "^2.0.2",
+    "koa-jwt": "^3.3.2",
+    "koa-logger": "^3.2.0",
+    "koa-mysql-session": "0.0.2",
+    "koa-onerror": "^4.1.0",
+    "koa-redis": "^3.1.2",
+    "koa-router": "^7.4.0",
+    "koa-session": "^5.8.2",
+    "koa-session-minimal": "^3.0.4",
+    "koa-static": "^5.0.0",
+    "koa-static-cache": "^5.1.2",
+    "koa-views": "^6.1.4",
+    "markdown-it": "^8.4.2",
+    "md5": "^2.2.1",
+    "mocha": "^5.2.0",
+    "moment": "^2.22.2",
+    "mysql": "^2.16.0"
+  }
+}
