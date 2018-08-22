@@ -1,80 +1,71 @@
-let PORT = 80;
+var PORT = 3000;
 
-let http = require('http');
-let url=require('url');
-let fs=require('fs');
-let mine=require('./mine').types;
-let path=require('path');
-let httpProxy = require('http-proxy');
+var http = require('http');
+var url=require('url');
+var fs=require('fs');
+var mine=require('./mine').types;
+var path=require('path');
+var httpProxy = require('http-proxy');
 
-let proxy_http = new httpProxy.createProxyServer({
-    target: {
-        host: 'localhost',
-        port: 80
-    }
+var proxy = httpProxy.createProxyServer({
+    target: 'http://192.168.10.38:8180/',   //接口地址
+    // 下面的设置用于https
+    // ssl: {
+    //     key: fs.readFileSync('server_decrypt.key', 'utf8'),
+    //     cert: fs.readFileSync('server.crt', 'utf8')
+    // },
+    // secure: false
 });
 
-let proxy_https = new httpProxy.createProxyServer({
-    target: {
-        host: 'localhost',
-        port: 443
-    }
+proxy.on('error', function(err, req, res){
+    res.writeHead(500, {
+        'content-type': 'text/plain'
+    });
+    console.log(err);
+    res.end('Something went wrong. And we are reporting a custom error message.');
 });
 
-// http.createServer(function(req, res) {
-//     console.log(req.headers.host)
-//     if (req.headers.host === 'localhost') {
-//         proxy_web.proxyRequest(req, res);
-//         proxy_web.on('error', function(err, req, res) {
-//             if (err) console.log(err);
-//             res.writeHead(500);
-//             res.end('Oops, something went very wrong...');
-//         });
-//     } else if (req.headers.host === '127.0.0.1') {
-//         // PORT = 443;
-//         proxy_api.proxyRequest(req, res);
-//         proxy_api.on('error', function(err, req, res) {
-//             if (err) console.log(err);
-//             res.writeHead(500);
-//             res.end('Oops, something went very wrong...');
-//         });
-//     }
-// }).listen(PORT);
+var server = http.createServer(function (request, response) {
+    var pathname = url.parse(request.url).pathname;
+    //var realPath = path.join("main-pages", pathname); // 指定根目录
+    var realPath = path.join("./", pathname);
+    console.log(pathname);
+    console.log(realPath);
+    var ext = path.extname(realPath);
+    ext = ext ? ext.slice(1) : 'unknown';
 
+    //判断如果是接口访问，则通过proxy转发
+    if(pathname.indexOf("mspj-mall-admin") > 0){
+        proxy.web(request, response);
+        return;
+    }
 
-// 新建一个代理 Proxy Server 对象  
-var proxy = httpProxy.createProxyServer({});  
-  
-// 捕获异常  
-proxy.on('error', function (err, req, res) {  
-  res.writeHead(500, {  
-    'Content-Type': 'text/plain'  
-  });  
-  res.end('Something went wrong. And we are reporting a custom error message.');  
-});  
-    
-// 在每次请求中，调用 proxy.web(req, res config) 方法进行请求分发  
-var server = require('http').createServer(function(req, res) {  
-  // 在这里可以自定义你的路由分发  
-  var host = req.headers.host, ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;  
-  console.log("client ip:" + ip + ", host:" + host);  
-    
-  switch(host){  
-    case 'www.111.cn':   
-        proxy.web(req, res, { target: 'http://localhost:80' });  
-    break;  
-    case 'vote.111.cn':  
-        proxy.web(req, res, { target: 'http://localhost:443' });  
-    break;
-    default:  
-        res.writeHead(200, {  
-            'Content-Type': 'text/plain'  
-        });  
-        res.end('Welcome to my server!');  
-  }  
-});  
-  
-console.log("listening on port 80")  
-server.listen(80);
-console.log('PORT')
+    fs.exists(realPath, function (exists) {
+        if (!exists) {
+            response.writeHead(404, {
+                'Content-Type': 'text/plain'
+            });
 
+            response.write("This request URL " + pathname + " was not found on this server.");
+            response.end();
+        } else {
+            fs.readFile(realPath, "binary", function (err, file) {
+                if (err) {
+                    response.writeHead(500, {
+                        'Content-Type': 'text/plain'
+                    });
+                    response.end(JSON.stringify(err));
+                } else {
+                    var contentType = mine[ext] || "text/plain";
+                    response.writeHead(200, {
+                        'Content-Type': contentType
+                    });
+                    response.write(file, "binary");
+                    response.end();
+                }
+            });
+        }
+    });
+});
+server.listen(PORT);
+console.log("Server runing at port: " + PORT + ".");
